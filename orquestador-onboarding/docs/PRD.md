@@ -12,12 +12,12 @@ Falta de Trazabilidad: Dificultad para saber si el cliente recibió toda la info
 
 3. Alcance y Funcionalidades (Scopes)
 Módulo A: Ingesta de Datos (Trigger)
-Soporte Webhook: Escucha activa de eventos desde un CRM (HubSpot, Pipedrive) o base de datos (Airtable/PostgreSQL).
+Airtable Integration: Obtenemos los datos del nuevo cliente desde Airtable.
 
 Validación: Verificación de campos obligatorios (Nombre Empresa, Email, Tipo de Servicio).
 
 Módulo B: Aprovisionamiento de Infraestructura
-Cloud Storage: Creación automática de una estructura de carpetas jerárquica (ej: [Nombre_Cliente]/Contratos, [Nombre_Cliente]/Assets).
+Google Drive: Creación automática de una estructura de carpetas jerárquica (ej: [Nombre_Cliente]/Contratos, [Nombre_Cliente]/Assets).
 
 Permisos: Asignación de permisos de lectura/escritura mediante API.
 
