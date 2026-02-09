@@ -22,7 +22,7 @@ Un flujo de trabajo automatizado en **n8n** que gestiona el ciclo de vida inicia
 
 ## � Instalación
 1. Importar el Flujo
-En n8n, ve a Workflows > Add Workflow > Import from File y selecciona workflow.json.
+En n8n, ve a Workflows > Add Workflow > Import from File y selecciona ONboarding.json.
 
 2. Configurar "Variables Secretas"
 Al importar, verás que los nodos tienen advertencias. Debes rellenar los siguientes campos que he dejado marcados con YOUR_...:
