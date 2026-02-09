@@ -1,9 +1,11 @@
 PRD: Orquestador de Onboarding Automatizado (n8n + GCP)
 
 1. Visión del Proyecto
+
 Crear un motor de integración centralizado que elimine el 100% de las tareas manuales tras la firma de un nuevo cliente o contrato, asegurando que el ecosistema digital del cliente (archivos, tareas y comunicación) esté listo en tiempo real.
 
 2. Definición del Problema
+
 Latencia: El tiempo entre la venta y el inicio del servicio se ve afectado por procesos administrativos manuales.
 
 Inconsistencia: Errores en la nomenclatura de carpetas o falta de asignación de tareas críticas en el gestor de proyectos.
@@ -11,20 +13,19 @@ Inconsistencia: Errores en la nomenclatura de carpetas o falta de asignación de
 Falta de Trazabilidad: Dificultad para saber si el cliente recibió toda la información inicial necesaria.
 
 3. Alcance y Funcionalidades (Scopes)
-Módulo A: Ingesta de Datos (Trigger)
-Airtable Integration: Obtenemos los datos del nuevo cliente desde Airtable.
 
-Validación: Verificación de campos obligatorios (Nombre Empresa, Email, Tipo de Servicio).
+### ✅ Módulo A: Ingesta de Datos (COMPLETADO)
+* Validación de Airtable, limpieza de datos y generación de Slugs.
+* **Mejora:** Implementación de lógica "Fail Fast" (nodo If) para descartar registros sin email.
 
-Módulo B: Aprovisionamiento de Infraestructura
-Google Drive: Creación automática de una estructura de carpetas jerárquica (ej: [Nombre_Cliente]/Contratos, [Nombre_Cliente]/Assets).
+### ✅ Módulo B: Aprovisionamiento de Infraestructura (COMPLETADO)
+* **Google Drive:** * Creación de carpeta raíz dentro de "ONboarding" (ID fijo).
+    * Creación paralela de sub-carpetas (Contratos, Assets).
+    * Asignación de permisos de edición al cliente (User: Email).
 
-Permisos: Asignación de permisos de lectura/escritura mediante API.
-
-Módulo C: Gestión Operativa
-Gestor de Proyectos: Creación de un "Tablero de Proyecto" basado en una plantilla predefinida según el servicio contratado.
-
-Asignación de Tareas: Definición de responsables y fechas de entrega relativas a la fecha de onboarding.
+### 🔄 Módulo C: Gestión Operativa (EN CURSO)
+* **Herramienta:** Trello.
+* **Objetivo:** Crear tarjeta de cliente con checklist de onboarding y adjuntar links de Drive.
 
 Módulo D: Secuencia de Comunicación
 Email Transaccional: Envío de un kit de bienvenida que incluya los enlaces generados en los Módulos B y C.
