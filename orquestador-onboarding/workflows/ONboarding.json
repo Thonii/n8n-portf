@@ -1,5 +1,5 @@
 {
-  "name": "My workflow",
+  "name": "Orquestador de Onboarding de Clientes (E2E)",
   "nodes": [
     {
       "parameters": {
@@ -10,111 +10,135 @@
             }
           ]
         },
-        "authentication": "airtableTokenApi",
-        "baseId": {
+        "base": {
           "__rl": true,
-          "value": "appJ7S12H6Cde3n8F",
+          "value": "YOUR_AIRTABLE_BASE_ID",
           "mode": "id"
         },
-        "tableId": {
+        "table": {
           "__rl": true,
-          "value": "tblyL4v5yFy7SmbJB",
+          "value": "YOUR_AIRTABLE_TABLE_ID",
           "mode": "id"
         },
-        "triggerField": "Last Modified",
+        "triggerField": "Status",
         "additionalFields": {
-          "viewId": "viwiLvN9t4OisDjMp"
+          "filterByFormula": "AND({Status} = 'Ganado', {Drive Folder} = BLANK())"
         }
       },
+      "id": "Show-Airtable-Trigger",
+      "name": "Airtable Trigger",
       "type": "n8n-nodes-base.airtableTrigger",
       "typeVersion": 1,
       "position": [
-        48,
-        -96
+        460,
+        300
       ],
-      "id": "7f22d3c3-b7b4-4d14-8505-1bf486a9aad7",
-      "name": "Airtable Trigger",
       "credentials": {
-        "airtableTokenApi": {
-          "id": "HyW45oeOyRn5Niwa",
-          "name": "Airtable Personal Access Token account"
+        "airtableApi": {
+          "id": "YOUR_CREDENTIAL_ID",
+          "name": "Airtable Credential"
         }
       }
     },
     {
       "parameters": {
-        "jsCode": "// Iteramos sobre TODOS los items que lleguen, no solo el primero\nreturn items.map(item => {\n  const input = item.json;\n  // Aseguramos que fields exista para evitar errores rojos\n  const fields = input.fields || {};\n\n  return {\n    json: {\n      // ID original para futuras actualizaciones en Airtable\n      airtableId: input.id, \n\n      // Normalización del Nombre (Juan perez -> Juan Perez)\n      clientName: fields.Cliente \n        ? fields.Cliente.trim().split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ') \n        : 'Cliente Desconocido',\n      \n      // Slug para carpetas (Mi Empresa S.A. -> mi-empresa-s.a.)\n      companySlug: fields.Empresa \n        ? fields.Empresa.toLowerCase().trim().replace(/\\s+/g, '-') \n        : 'empresa-sin-nombre',\n      \n      // Fecha actual\n      onboardingDate: new Date().toISOString().split('T')[0],\n      \n      // Email limpio\n      safeEmail: fields.Email ? fields.Email.toLowerCase().trim() : null,\n      \n      // Tipo de servicio\n      serviceType: fields.Servicio || 'Estandar'\n    }\n  };\n});"
+        "jsCode": "// Limpieza y Estandarización de Datos\nconst clientName = $input.item.json['Cliente'];\nconst company = $input.item.json['Empresa'];\nconst email = $input.item.json['Email'];\nconst id = $input.item.json['id'];\n\n// Generar Slug (ej: 'Tecno Ancon' -> 'tecno-ancon')\nconst slug = company.toLowerCase().replace(/ /g, '-').replace(/[^\\w-]+/g, '');\n\nreturn {\n  clientName,\n  companySlug: slug,\n  safeEmail: email ? email.trim() : null,\n  airtableId: id,\n  onboardingDate: new Date().toISOString()\n};"
       },
+      "id": "Show-Code-Node",
+      "name": "Standardize Data",
       "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [
+        680,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{ $json.safeEmail }}",
+              "operation": "isNotEmpty"
+            }
+          ]
+        }
+      },
+      "id": "Show-If-Node",
+      "name": "Has Email?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        900,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "content": "⚠️ **ALERTA: Onboarding Detenido**\n\nEl cliente **{{ $('Standardize Data').item.json.clientName }}** no tiene email registrado.\n\n🛑 **Acción:** Revisar Airtable manualmente."
+      },
+      "id": "Show-Discord-Alert",
+      "name": "Discord Alert ⚠️",
+      "type": "n8n-nodes-base.discord",
       "typeVersion": 2,
       "position": [
-        272,
-        -96
+        1100,
+        500
       ],
-      "id": "b456b19b-e907-4ce0-94b6-54175f2cd840",
-      "name": "Code in JavaScript"
-    },
-    {
-      "parameters": {
-        "resource": "folder",
-        "name": "={{ $json.companySlug }}",
-        "driveId": {
-          "__rl": true,
-          "value": "My Drive",
-          "mode": "list",
-          "cachedResultName": "My Drive",
-          "cachedResultUrl": "https://drive.google.com/drive/my-drive"
-        },
-        "folderId": {
-          "__rl": true,
-          "value": "1PilS8X7nQYklV4-K-EQ7cFeYT9S_wXOu",
-          "mode": "id"
-        },
-        "options": {}
-      },
-      "type": "n8n-nodes-base.googleDrive",
-      "typeVersion": 3,
-      "position": [
-        736,
-        -224
-      ],
-      "id": "9ab5709e-e38a-4f02-8eb6-714f24c957dc",
-      "name": "Create Main Folder",
       "credentials": {
-        "googleDriveOAuth2Api": {
-          "id": "3WLfbVeuCRLRM3xm",
-          "name": "Google Drive account"
+        "discordWebhookApi": {
+          "id": "YOUR_CREDENTIAL_ID",
+          "name": "Discord Webhook"
         }
       }
     },
     {
       "parameters": {
         "resource": "folder",
-        "name": "Contracts",
-        "driveId": {
-          "__rl": true,
-          "mode": "list",
-          "value": "My Drive"
-        },
-        "folderId": {
-          "__rl": true,
-          "value": "={{ $('Create Main Folder').item.json.id }}",
-          "mode": "id"
-        },
-        "options": {}
+        "name": "={{ $json.companySlug }} - {{ $json.clientName }}",
+        "options": {
+          "parents": [
+            "YOUR_ONBOARDING_PARENT_FOLDER_ID"
+          ]
+        }
       },
+      "id": "Show-Create-Main",
+      "name": "Create Main Folder",
       "type": "n8n-nodes-base.googleDrive",
-      "typeVersion": 3,
+      "typeVersion": 2,
       "position": [
-        960,
-        -320
+        1120,
+        200
       ],
-      "id": "61c818a1-b956-4b0b-a0f3-95d73cd60802",
-      "name": "Create Contracts Folder",
       "credentials": {
         "googleDriveOAuth2Api": {
-          "id": "3WLfbVeuCRLRM3xm",
-          "name": "Google Drive account"
+          "id": "YOUR_CREDENTIAL_ID",
+          "name": "Google Drive Account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "folder",
+        "name": "Contratos",
+        "options": {
+          "parents": [
+            "={{ $('Create Main Folder').item.json.id }}"
+          ]
+        }
+      },
+      "id": "Show-Create-Contracts",
+      "name": "Create Contracts",
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 2,
+      "position": [
+        1340,
+        100
+      ],
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "YOUR_CREDENTIAL_ID",
+          "name": "Google Drive Account"
         }
       }
     },
@@ -122,95 +146,71 @@
       "parameters": {
         "resource": "folder",
         "name": "Assets",
-        "driveId": {
-          "__rl": true,
-          "mode": "list",
-          "value": "My Drive"
-        },
-        "folderId": {
-          "__rl": true,
-          "value": "={{ $('Create Main Folder').item.json.id }}",
-          "mode": "id"
-        },
-        "options": {}
+        "options": {
+          "parents": [
+            "={{ $('Create Main Folder').item.json.id }}"
+          ]
+        }
       },
+      "id": "Show-Create-Assets",
+      "name": "Create Assets",
       "type": "n8n-nodes-base.googleDrive",
-      "typeVersion": 3,
+      "typeVersion": 2,
       "position": [
-        960,
-        -112
+        1340,
+        320
       ],
-      "id": "5a22dba6-1b80-4a1c-b9c2-a463b3586040",
-      "name": "Create Assets Folder",
       "credentials": {
         "googleDriveOAuth2Api": {
-          "id": "3WLfbVeuCRLRM3xm",
-          "name": "Google Drive account"
+          "id": "YOUR_CREDENTIAL_ID",
+          "name": "Google Drive Account"
         }
       }
     },
     {
       "parameters": {
-        "conditions": {
-          "options": {
-            "caseSensitive": true,
-            "leftValue": "",
-            "typeValidation": "strict",
-            "version": 3
-          },
-          "conditions": [
-            {
-              "id": "1b137325-ef87-47a4-9ee4-c5692f0f286e",
-              "leftValue": "={{ $json.safeEmail }}",
-              "rightValue": "",
-              "operator": {
-                "type": "string",
-                "operation": "notEmpty",
-                "singleValue": true
-              }
-            },
-            {
-              "id": "e0430287-ba74-4224-94c2-e5e9a3e5ab0b",
-              "leftValue": "={{ $json.safeEmail }}",
-              "rightValue": "null",
-              "operator": {
-                "type": "string",
-                "operation": "notEquals"
-              }
-            }
-          ],
-          "combinator": "and"
+        "operation": "add",
+        "fileId": {
+          "__rl": true,
+          "value": "={{ $('Create Main Folder').item.json.id }}",
+          "mode": "id"
         },
-        "options": {}
+        "email": "={{ $('Standardize Data').item.json.safeEmail }}",
+        "role": "editor"
       },
-      "type": "n8n-nodes-base.if",
-      "typeVersion": 2.3,
+      "id": "Show-Permissions",
+      "name": "Add Permissions",
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 2,
       "position": [
-        496,
-        -96
+        1560,
+        320
       ],
-      "id": "2ad57572-b52d-41b6-8718-acdbb34dace7",
-      "name": "If"
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "YOUR_CREDENTIAL_ID",
+          "name": "Google Drive Account"
+        }
+      }
     },
     {
       "parameters": {
-        "listId": "698a39fbe12b66261efd66c2",
-        "name": "={{ $('Code in JavaScript').item.json.clientName }} - Onboarding",
-        "description": "=🚀 Nuevo Cliente Registrado  👤 Cliente: {{ $('Code in JavaScript').item.json.clientName }} 🏢 Empresa: {{ $('Code in JavaScript').item.json.companySlug }} 📧 Email: {{ $('Code in JavaScript').item.json.safeEmail }}  📂 Carpeta Drive: https://drive.google.com/drive/folders/{{ $('Create Main Folder').item.json.id }}",
-        "additionalFields": {}
+        "listId": "YOUR_TRELLO_LIST_ID",
+        "name": "={{ $('Standardize Data').item.json.clientName }} - Onboarding",
+        "description": "🚀 Nuevo Cliente\n\n📂 Drive: https://drive.google.com/drive/folders/{{ $('Create Main Folder').item.json.id }}\n📧 Email: {{ $('Standardize Data').item.json.safeEmail }}"
       },
+      "id": "Show-Trello-Card",
+      "name": "Create Trello Card",
       "type": "n8n-nodes-base.trello",
       "typeVersion": 1,
       "position": [
-        1408,
-        -112
+        1780,
+        320
       ],
-      "id": "eb7b7252-fa42-4d2b-9b70-4a595d2e3e0c",
-      "name": "Add Trello Card",
       "credentials": {
         "trelloApi": {
-          "id": "bUbs045UzVUNPI7Y",
-          "name": "Trello account"
+          "id": "YOUR_CREDENTIAL_ID",
+          "name": "Trello Account"
         }
       }
     },
@@ -219,328 +219,103 @@
         "operation": "update",
         "base": {
           "__rl": true,
-          "value": "appJ7S12H6Cde3n8F",
-          "mode": "list",
-          "cachedResultName": "CRM - Onboarding Orchestrator",
-          "cachedResultUrl": "https://airtable.com/appJ7S12H6Cde3n8F"
+          "value": "YOUR_AIRTABLE_BASE_ID",
+          "mode": "id"
         },
         "table": {
           "__rl": true,
-          "value": "tblyL4v5yFy7SmbJB",
-          "mode": "list",
-          "cachedResultName": "Clientes",
-          "cachedResultUrl": "https://airtable.com/appJ7S12H6Cde3n8F/tblyL4v5yFy7SmbJB"
+          "value": "YOUR_AIRTABLE_TABLE_ID",
+          "mode": "id"
         },
+        "id": "={{ $('Standardize Data').item.json.airtableId }}",
         "columns": {
           "mappingMode": "defineBelow",
           "value": {
-            "Drive Folder": "=https://drive.google.com/drive/folders/{{ $('Create Main Folder').item.json.id }}",
-            "id": "={{ $('Code in JavaScript').item.json.airtableId }}"
-          },
-          "matchingColumns": [
-            "id"
-          ],
-          "schema": [
-            {
-              "id": "id",
-              "displayName": "id",
-              "required": false,
-              "defaultMatch": true,
-              "display": true,
-              "type": "string",
-              "readOnly": true,
-              "removed": false
-            },
-            {
-              "id": "Cliente",
-              "displayName": "Cliente",
-              "required": false,
-              "defaultMatch": false,
-              "canBeUsedToMatch": true,
-              "display": true,
-              "type": "string",
-              "readOnly": false,
-              "removed": false
-            },
-            {
-              "id": "Empresa",
-              "displayName": "Empresa",
-              "required": false,
-              "defaultMatch": false,
-              "canBeUsedToMatch": true,
-              "display": true,
-              "type": "string",
-              "readOnly": false,
-              "removed": false
-            },
-            {
-              "id": "Email",
-              "displayName": "Email",
-              "required": false,
-              "defaultMatch": false,
-              "canBeUsedToMatch": true,
-              "display": true,
-              "type": "string",
-              "readOnly": false,
-              "removed": false
-            },
-            {
-              "id": "Servicio",
-              "displayName": "Servicio",
-              "required": false,
-              "defaultMatch": false,
-              "canBeUsedToMatch": true,
-              "display": true,
-              "type": "options",
-              "options": [
-                {
-                  "name": "Estándar",
-                  "value": "Estándar"
-                },
-                {
-                  "name": "Premium",
-                  "value": "Premium"
-                },
-                {
-                  "name": "Custom",
-                  "value": "Custom"
-                },
-                {
-                  "name": "Consultoría",
-                  "value": "Consultoría"
-                },
-                {
-                  "name": "Desarrollo Web",
-                  "value": "Desarrollo Web"
-                },
-                {
-                  "name": "Marketing Digital",
-                  "value": "Marketing Digital"
-                }
-              ],
-              "readOnly": false,
-              "removed": false
-            },
-            {
-              "id": "Status",
-              "displayName": "Status",
-              "required": false,
-              "defaultMatch": false,
-              "canBeUsedToMatch": true,
-              "display": true,
-              "type": "options",
-              "options": [
-                {
-                  "name": "Prospecto",
-                  "value": "Prospecto"
-                },
-                {
-                  "name": "Negociación",
-                  "value": "Negociación"
-                },
-                {
-                  "name": "Ganado",
-                  "value": "Ganado"
-                }
-              ],
-              "readOnly": false,
-              "removed": false
-            },
-            {
-              "id": "Drive Folder",
-              "displayName": "Drive Folder",
-              "required": false,
-              "defaultMatch": false,
-              "canBeUsedToMatch": true,
-              "display": true,
-              "type": "string",
-              "readOnly": false,
-              "removed": false
-            },
-            {
-              "id": "Last Modified",
-              "displayName": "Last Modified",
-              "required": false,
-              "defaultMatch": false,
-              "canBeUsedToMatch": true,
-              "display": true,
-              "type": "string",
-              "readOnly": true,
-              "removed": true
-            }
-          ],
-          "attemptToConvertTypes": false,
-          "convertFieldsToString": false
-        },
-        "options": {}
+            "Drive Folder": "https://drive.google.com/drive/folders/{{ $('Create Main Folder').item.json.id }}"
+          }
+        }
       },
+      "id": "Show-Update-Airtable",
+      "name": "Close Loop (Airtable)",
       "type": "n8n-nodes-base.airtable",
-      "typeVersion": 2.1,
+      "typeVersion": 1,
       "position": [
-        1600,
-        -112
+        2000,
+        320
       ],
-      "id": "3070e6f2-b9b6-4a44-a475-ede5fa7e5b4c",
-      "name": "Add Drive Link",
       "credentials": {
-        "airtableTokenApi": {
-          "id": "HyW45oeOyRn5Niwa",
-          "name": "Airtable Personal Access Token account"
+        "airtableApi": {
+          "id": "YOUR_CREDENTIAL_ID",
+          "name": "Airtable Credential"
         }
       }
     },
     {
       "parameters": {
-        "sendTo": "={{ $('Code in JavaScript').item.json.safeEmail }}",
-        "subject": "=Bienvenido a bordo, {{ $('Code in JavaScript').item.json.clientName }} 🚀",
-        "message": "=<div style=\"font-family: Arial, sans-serif; color: #333;\">   <h2>¡Hola, {{ $('Code in JavaScript').item.json.clientName }}!</h2>   <p>Nos alegra mucho comenzar a trabajar contigo. Tu proceso de onboarding ha iniciado correctamente.</p>      <p>Hemos preparado una carpeta segura en Google Drive donde centralizaremos todos los documentos y entregables del proyecto.</p>      <div style=\"background-color: #f5f5f5; padding: 15px; border-radius: 5px; text-align: center; margin: 20px 0;\">     <a href=\"https://drive.google.com/drive/folders/{{ $('Create Main Folder').item.json.id }}\"         style=\"background-color: #0F9D58; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; font-weight: bold;\">        Acceder a mi Carpeta de Proyecto     </a>   </div>    <p><strong>Próximos pasos:</strong></p>   <ul>     <li>Sube tu logotipo y manual de marca en la carpeta <em>Assets</em>.</li>     <li>Revisa el borrador de contrato en la carpeta <em>Contratos</em>.</li>   </ul>    <p>Cualquier duda, estamos a un clic de distancia.</p>   <p>Saludos,<br>El equipo de Onboarding</p> </div>",
-        "options": {}
+        "sendTo": "={{ $('Standardize Data').item.json.safeEmail }}",
+        "subject": "Bienvenido a bordo, {{ $('Standardize Data').item.json.clientName }} 🚀",
+        "emailType": "html",
+        "message": "<h2>¡Hola!</h2><p>Tu carpeta está lista: <a href=\"https://drive.google.com/drive/folders/{{ $('Create Main Folder').item.json.id }}\">Acceder aquí</a></p>"
       },
+      "id": "Show-Gmail-Node",
+      "name": "Send Welcome Email",
       "type": "n8n-nodes-base.gmail",
-      "typeVersion": 2.2,
+      "typeVersion": 2,
       "position": [
-        1808,
-        -112
+        2220,
+        320
       ],
-      "id": "2069606e-4f53-47f6-a682-f75f2c67d28b",
-      "name": "Email Notification",
-      "webhookId": "a761273f-7944-429f-bf2f-4bc54e13bee4",
       "credentials": {
         "gmailOAuth2": {
-          "id": "bHCgFJO9dgBgxz92",
-          "name": "Gmail account"
+          "id": "YOUR_CREDENTIAL_ID",
+          "name": "Gmail Account"
         }
       }
     },
     {
       "parameters": {
-        "operation": "share",
-        "fileId": {
-          "__rl": true,
-          "value": "={{ $('Create Main Folder').item.json.id }}",
-          "mode": "id"
-        },
-        "permissionsUi": {
-          "permissionsValues": {
-            "role": "writer",
-            "type": "user",
-            "emailAddress": "={{ $('Code in JavaScript').item.json.safeEmail }}"
-          }
-        },
-        "options": {}
+        "content": "✅ **Éxito:** Onboarding completado para **{{ $('Standardize Data').item.json.clientName }}**."
       },
-      "type": "n8n-nodes-base.googleDrive",
-      "typeVersion": 3,
-      "position": [
-        1216,
-        -112
-      ],
-      "id": "3f0a10c6-cb38-4e24-ade0-732a8f1e87a0",
-      "name": "Permissions",
-      "credentials": {
-        "googleDriveOAuth2Api": {
-          "id": "3WLfbVeuCRLRM3xm",
-          "name": "Google Drive account"
-        }
-      }
-    },
-    {
-      "parameters": {
-        "authentication": "webhook",
-        "content": "=⚠️ **ATENCIÓN: Onboarding Detenido**\n\nEl cliente **{{ $('Code in JavaScript').item.json.clientName }}** no tiene un correo electrónico registrado en Airtable.\n\n🛑 **Acción Requerida:**\n1. Revisar Airtable.\n2. Conseguir el email del cliente.\n3. Ejecutar el proceso manualmente.",
-        "options": {}
-      },
+      "id": "Show-Discord-Success",
+      "name": "Discord Success ✅",
       "type": "n8n-nodes-base.discord",
       "typeVersion": 2,
       "position": [
-        704,
-        0
+        2440,
+        320
       ],
-      "id": "213811c7-4f89-4bae-93d8-c3baea12b535",
-      "name": "Internal Notification Bad ",
-      "webhookId": "c4c441b6-48ff-485c-8487-1152f6554060",
       "credentials": {
         "discordWebhookApi": {
-          "id": "sdBFeIX7u1OuNEzl",
-          "name": "Discord Webhook account"
-        }
-      }
-    },
-    {
-      "parameters": {
-        "authentication": "webhook",
-        "content": "=✅ **¡Nuevo Onboarding Completado!**\n\n👤 **Cliente:** {{ $('Code in JavaScript').item.json.clientName }}\n🏢 **Empresa:** {{ $('Code in JavaScript').item.json.companySlug }}\n\n📂 **Drive:** [Abrir Carpeta](https://drive.google.com/drive/folders/{{ $('Create Main Folder').item.json.id }})\n📋 **Trello:** Tarjeta creada en *Nuevos Ingresos*.\n📧 **Email:** Enviado correctamente.",
-        "options": {}
-      },
-      "type": "n8n-nodes-base.discord",
-      "typeVersion": 2,
-      "position": [
-        2016,
-        -112
-      ],
-      "id": "afd6be79-3bc1-4dc0-aa88-56c32e9fa3fe",
-      "name": "Internal Notification Good",
-      "webhookId": "ec33b7bd-ff85-4f6b-9465-b9e27ccef40b",
-      "credentials": {
-        "discordWebhookApi": {
-          "id": "sdBFeIX7u1OuNEzl",
-          "name": "Discord Webhook account"
+          "id": "YOUR_CREDENTIAL_ID",
+          "name": "Discord Webhook"
         }
       }
     }
   ],
-  "pinData": {},
   "connections": {
     "Airtable Trigger": {
       "main": [
         [
           {
-            "node": "Code in JavaScript",
+            "node": "Standardize Data",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Code in JavaScript": {
+    "Standardize Data": {
       "main": [
         [
           {
-            "node": "If",
+            "node": "Has Email?",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Create Main Folder": {
-      "main": [
-        [
-          {
-            "node": "Create Assets Folder",
-            "type": "main",
-            "index": 0
-          },
-          {
-            "node": "Create Contracts Folder",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Create Assets Folder": {
-      "main": [
-        [
-          {
-            "node": "Permissions",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "If": {
+    "Has Email?": {
       "main": [
         [
           {
@@ -551,69 +326,83 @@
         ],
         [
           {
-            "node": "Internal Notification Bad ",
+            "node": "Discord Alert ⚠️",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Add Trello Card": {
+    "Create Main Folder": {
       "main": [
         [
           {
-            "node": "Add Drive Link",
+            "node": "Create Contracts",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Create Assets",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Add Drive Link": {
+    "Create Assets": {
       "main": [
         [
           {
-            "node": "Email Notification",
+            "node": "Add Permissions",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Email Notification": {
+    "Add Permissions": {
       "main": [
         [
           {
-            "node": "Internal Notification Good",
+            "node": "Create Trello Card",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Permissions": {
+    "Create Trello Card": {
       "main": [
         [
           {
-            "node": "Add Trello Card",
+            "node": "Close Loop (Airtable)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Close Loop (Airtable)": {
+      "main": [
+        [
+          {
+            "node": "Send Welcome Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Welcome Email": {
+      "main": [
+        [
+          {
+            "node": "Discord Success ✅",
             "type": "main",
             "index": 0
           }
         ]
       ]
     }
-  },
-  "active": false,
-  "settings": {
-    "executionOrder": "v1",
-    "binaryMode": "separate",
-    "availableInMCP": false
-  },
-  "versionId": "76060191-62d8-4e71-bacf-a83b3d04f494",
-  "meta": {
-    "templateCredsSetupCompleted": true,
-    "instanceId": "6cd117355c2730cd8ae9ac4fe650222106a59ed6839a3d9a5fb92e558cd02179"
-  },
-  "id": "5T78SLPRk0n0J07RlE-5q",
-  "tags": []
+  }
 }
