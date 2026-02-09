@@ -23,6 +23,18 @@ Un flujo de trabajo automatizado en **n8n** que gestiona el ciclo de vida inicia
 4. **Gestión de Estado:** Actualización bidireccional en Airtable para evitar duplicados.
 
 ## � Instalación
-1. Importar `workflow.json` en tu instancia de n8n.
-2. Configurar credenciales (Google OAuth2, Trello Token, Discord Webhook).
-3. Ajustar los IDs de las carpetas padre y tableros.
+1. Importar el Flujo
+En n8n, ve a Workflows > Add Workflow > Import from File y selecciona workflow.json.
+
+2. Configurar "Variables Secretas"
+Al importar, verás que los nodos tienen advertencias. Debes rellenar los siguientes campos que he dejado marcados con YOUR_...:
+
+Airtable Trigger: Selecciona tu Base ID y Table ID.
+
+Create Main Folder: Pega el ID de tu carpeta padre (ONboarding) en Parent ID.
+
+Discord (Ambos nodos): Pega tu URL de Webhook en Webhook URL.
+
+Trello: Selecciona tu List ID correcta.
+
+Credenciales: Tendrás que volver a seleccionar tus credenciales guardadas en cada nodo (n8n no exporta las llaves por seguridad).
