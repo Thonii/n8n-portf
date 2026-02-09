@@ -10,9 +10,7 @@ Un flujo de trabajo automatizado en **n8n** que gestiona el ciclo de vida inicia
 
 ## � Diagrama del Flujo
 
-```markdown
 ![Workflow Diagram](workflow.png)
-```
 
 ## ⚡ Características Principales
 1. **Validación de Datos:** Filtro inicial para asegurar integridad de contactos.
