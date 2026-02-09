@@ -10,7 +10,7 @@ Un flujo de trabajo automatizado en **n8n** que gestiona el ciclo de vida inicia
 
 ## � Diagrama del Flujo
 
-![Workflow Diagram](workflow.png)
+![Workflow Diagram](./orquestador-onboarding/docs/workflow.png)
 
 ## ⚡ Características Principales
 1. **Validación de Datos:** Filtro inicial para asegurar integridad de contactos.
