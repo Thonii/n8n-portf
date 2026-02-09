@@ -17,20 +17,22 @@ Falta de Trazabilidad: Dificultad para saber si el cliente recibió toda la info
 ### ✅ Módulo A: Ingesta de Datos (COMPLETADO)
 * Validación de Airtable, limpieza de datos y generación de Slugs.
 * **Mejora:** Implementación de lógica "Fail Fast" (nodo If) para descartar registros sin email.
+* **Error Handling:** Notificación a Discord si la validación falla (Rama False del If).
 
 ### ✅ Módulo B: Aprovisionamiento de Infraestructura (COMPLETADO)
 * **Google Drive:** * Creación de carpeta raíz dentro de "ONboarding" (ID fijo).
     * Creación paralela de sub-carpetas (Contratos, Assets).
     * Asignación de permisos de edición al cliente (User: Email).
 
-### 🔄 Módulo C: Gestión Operativa (EN CURSO)
+### ✅ Módulo C: Gestión Operativa (COMPLETADO)
 * **Herramienta:** Trello.
 * **Objetivo:** Crear tarjeta de cliente con checklist de onboarding y adjuntar links de Drive.
+* **Actualización:** Se agrega un nodo de Airtable ("Add Drive Link") para guardar la URL de la carpeta generada en el registro original.
 
-Módulo D: Secuencia de Comunicación
-Email Transaccional: Envío de un kit de bienvenida que incluya los enlaces generados en los Módulos B y C.
-
-Notificaciones Internas: Alerta al equipo en Slack o Discord sobre el nuevo registro exitoso.
+### ✅ Módulo D: Comunicación & Alertas (Discord + Gmail)(COMPLETADO)
+* **Cliente (Gmail):** Envío automático de Kit de Bienvenida (HTML) con botón de acceso a Drive.
+* **Equipo (Discord - Éxito):** Notificación en canal `#general` confirmando el onboarding exitoso.
+* **Equipo (Discord - Alerta):** Notificación prioritaria en canal `#alertas` si el cliente no tiene email, solicitando intervención manual.
 
 4. Stack Tecnológico Sugerido
 Motor de Flujo: n8n (Self-hosted en Google Cloud Platform).
